@@ -1,95 +1,133 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import '../models/user.dart';
 import '../services/api_service.dart';
+import '../services/storage_service.dart';
 
 class AuthProvider with ChangeNotifier {
+  final ApiService _apiService = ApiService();
+  final StorageService _storageService = StorageService();
+
+  User? _user;
   String? _token;
-  String? _userName;
-  String? _userEmail;
   bool _isLoading = false;
+  String? _error;
 
+  User? get user => _user;
   String? get token => _token;
-  String? get userName => _userName;
-  String? get userEmail => _userEmail;
   bool get isLoading => _isLoading;
-  bool get isAuthenticated => _token != null;
+  String? get error => _error;
+  bool get isAuthenticated => _user != null && _token != null;
+  String get role => _user?.role ?? '';
 
-  Future<void> loadUserData() async {
-    final prefs = await SharedPreferences.getInstance();
-    _token = prefs.getString('token');
-    _userName = prefs.getString('userName');
-    _userEmail = prefs.getString('userEmail');
-    notifyListeners();
-  }
-
-  Future<bool> login(String email, String password) async {
+  Future<void> checkAuthStatus() async {
     _isLoading = true;
     notifyListeners();
 
     try {
-      final response = await ApiService.login(email, password);
-      
-      if (response['success'] == true) {
+      final token = await _storageService.getToken();
+      if (token != null) {
+        _token = token;
+        final userData = await _storageService.getUser();
+        if (userData != null) {
+          _user = User.fromJson(userData);
+        }
+      }
+    } catch (e) {
+      _error = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> register({
+    required String name,
+    required String email,
+    required String password,
+    required String role,
+  }) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final response = await _apiService.register({
+        'name': name,
+        'email': email,
+        'password': password,
+        'role': role,
+      });
+
+      if (response['success']) {
         _token = response['data']['accessToken'];
-        _userEmail = email;
-        
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('token', _token!);
-        await prefs.setString('userEmail', email);
+        await _storageService.saveToken(_token!);
+
+        _user = User.fromJson(response['data']['user']);
+        await _storageService.saveUser(_user!.toJson());
         
         _isLoading = false;
         notifyListeners();
         return true;
       }
-      
+    } catch (e) {
+      _error = e.toString().replaceAll('Exception: ', '');
       _isLoading = false;
       notifyListeners();
       return false;
-    } catch (e) {
-      _isLoading = false;
-      notifyListeners();
-      rethrow;
     }
+
+    _isLoading = false;
+    notifyListeners();
+    return false;
   }
 
-  Future<bool> register(String name, String email, String password) async {
+  Future<bool> login({
+    required String email,
+    required String password,
+  }) async {
     _isLoading = true;
+    _error = null;
     notifyListeners();
 
     try {
-      final response = await ApiService.register(name, email, password);
-      
-      if (response['success'] == true) {
+      final response = await _apiService.login({
+        'email': email,
+        'password': password,
+      });
+
+      if (response['success']) {
         _token = response['data']['accessToken'];
-        _userName = name;
-        _userEmail = email;
-        
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('token', _token!);
-        await prefs.setString('userName', name);
-        await prefs.setString('userEmail', email);
+        await _storageService.saveToken(_token!);
+
+        _user = User.fromJson(response['data']['user']);
+        await _storageService.saveUser(_user!.toJson());
         
         _isLoading = false;
         notifyListeners();
         return true;
       }
-      
+    } catch (e) {
+      _error = e.toString().replaceAll('Exception: ', '');
       _isLoading = false;
       notifyListeners();
       return false;
-    } catch (e) {
-      _isLoading = false;
-      notifyListeners();
-      rethrow;
     }
+
+    _isLoading = false;
+    notifyListeners();
+    return false;
   }
 
   Future<void> logout() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
+    await _storageService.clearAll();
+    _user = null;
     _token = null;
-    _userName = null;
-    _userEmail = null;
+    _error = null;
+    notifyListeners();
+  }
+
+  void clearError() {
+    _error = null;
     notifyListeners();
   }
 }
