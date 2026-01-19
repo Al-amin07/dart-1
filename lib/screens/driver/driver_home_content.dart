@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/load_provider.dart';
 import '../../providers/driver_provider.dart';
+import '../../widgets/notification_badge.dart';
 
 class DriverHomeContent extends StatefulWidget {
   const DriverHomeContent({super.key});
@@ -144,14 +145,20 @@ class _DriverHomeContentState extends State<DriverHomeContent> {
                   ),
                 ],
               ),
-              CircleAvatar(
-                radius: 25,
-                backgroundColor: Colors.white,
-                child: Icon(
-                  Icons.local_shipping,
-                  size: 30,
-                  color: Colors.green[700],
-                ),
+              Row(
+                children: [
+                  const NotificationBadge(),
+                  const SizedBox(width: 8),
+                  CircleAvatar(
+                    radius: 25,
+                    backgroundColor: Colors.white,
+                    child: Icon(
+                      Icons.local_shipping,
+                      size: 30,
+                      color: Colors.green[700],
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

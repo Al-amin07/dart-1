@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/vehicle_provider.dart';
 import '../../widgets/vehicle_card.dart';
+import 'create_vehicle_screen.dart';
 
 class AdminVehiclesScreen extends StatefulWidget {
   const AdminVehiclesScreen({super.key});
@@ -29,6 +30,19 @@ class _AdminVehiclesScreenState extends State<AdminVehiclesScreen> {
         title: const Text('Vehicles'),
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const CreateVehicleScreen(),
+                ),
+              ).then((_) => _loadData());
+            },
+          ),
+        ],
       ),
       body: Consumer<VehicleProvider>(
         builder: (context, vehicleProvider, _) {
@@ -70,6 +84,27 @@ class _AdminVehiclesScreenState extends State<AdminVehiclesScreen> {
                     style: TextStyle(
                       fontSize: 18,
                       color: Colors.grey[600],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const CreateVehicleScreen(),
+                        ),
+                      ).then((_) => _loadData());
+                    },
+                    icon: const Icon(Icons.add),
+                    label: const Text('Register Vehicle'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
                     ),
                   ),
                 ],

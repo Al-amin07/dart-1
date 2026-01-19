@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/load_provider.dart';
+import '../../widgets/notification_badge.dart';
 import 'create_load_screen.dart';
 
 class CustomerHomeContent extends StatefulWidget {
@@ -141,14 +142,20 @@ class _CustomerHomeContentState extends State<CustomerHomeContent> {
               ),
             ],
           ),
-          CircleAvatar(
-            radius: 25,
-            backgroundColor: Colors.white,
-            child: Icon(
-              Icons.person,
-              size: 30,
-              color: Colors.purple[700],
-            ),
+          Row(
+            children: [
+              const NotificationBadge(),
+              const SizedBox(width: 8),
+              CircleAvatar(
+                radius: 25,
+                backgroundColor: Colors.white,
+                child: Icon(
+                  Icons.person,
+                  size: 30,
+                  color: Colors.purple[700],
+                ),
+              ),
+            ],
           ),
         ],
       ),

@@ -130,4 +130,5 @@ class AuthProvider with ChangeNotifier {
     _error = null;
     notifyListeners();
   }
+  
 }

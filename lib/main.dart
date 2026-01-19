@@ -4,6 +4,7 @@ import 'providers/auth_provider.dart';
 import 'providers/load_provider.dart';
 import 'providers/driver_provider.dart';
 import 'providers/vehicle_provider.dart';
+import 'providers/notification_provider.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/home_screen.dart';
 
@@ -22,6 +23,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => LoadProvider()),
         ChangeNotifierProvider(create: (_) => DriverProvider()),
         ChangeNotifierProvider(create: (_) => VehicleProvider()),
+        ChangeNotifierProvider(create: (_) => NotificationProvider()),
       ],
       child: MaterialApp(
         title: 'Delivery Management',

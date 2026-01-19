@@ -301,4 +301,48 @@ class ApiService {
       }
     }
   }
+
+
+
+  Future<Map<String, dynamic>> getUserNotifications(String userId, {bool? isRead}) async {
+  var uri = Uri.parse('$baseUrl/notifications/user/$userId');
+  if (isRead != null) {
+    uri = uri.replace(queryParameters: {'isRead': isRead.toString()});
+  }
+
+  final response = await http.get(uri, headers: await _getHeaders());
+  return _handleResponse(response);
+}
+
+Future<Map<String, dynamic>> getUnreadCount(String userId) async {
+  final response = await http.get(
+    Uri.parse('$baseUrl/notifications/user/$userId/unread-count'),
+    headers: await _getHeaders(),
+  );
+  return _handleResponse(response);
+}
+
+Future<Map<String, dynamic>> markNotificationAsRead(String notificationId, String userId) async {
+  final response = await http.patch(
+    Uri.parse('$baseUrl/notifications/$notificationId/user/$userId/read'),
+    headers: await _getHeaders(),
+  );
+  return _handleResponse(response);
+}
+
+Future<Map<String, dynamic>> markAllNotificationsAsRead(String userId) async {
+  final response = await http.patch(
+    Uri.parse('$baseUrl/notifications/user/$userId/read-all'),
+    headers: await _getHeaders(),
+  );
+  return _handleResponse(response);
+}
+
+Future<Map<String, dynamic>> deleteNotification(String notificationId, String userId) async {
+  final response = await http.delete(
+    Uri.parse('$baseUrl/notifications/$notificationId/user/$userId'),
+    headers: await _getHeaders(),
+  );
+  return _handleResponse(response);
+}
 }

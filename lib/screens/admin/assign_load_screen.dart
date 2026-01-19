@@ -141,7 +141,11 @@ class _AssignLoadScreenState extends State<AssignLoadScreen> {
                         return const Center(child: CircularProgressIndicator());
                       }
 
-                      if (driverProvider.drivers.isEmpty) {
+                      final availableDrivers = driverProvider.drivers
+                          .where((d) => d.status == 'available')
+                          .toList();
+
+                      if (availableDrivers.isEmpty) {
                         return Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
@@ -153,22 +157,26 @@ class _AssignLoadScreenState extends State<AssignLoadScreen> {
                       }
 
                       return Column(
-                        children: driverProvider.drivers.map((driver) {
-                          return RadioListTile<String>(
-                            value: driver.userId,
-                            groupValue: _selectedDriverId,
-                            onChanged: (value) {
-                              setState(() {
-                                _selectedDriverId = value;
-                              });
-                            },
-                            title: Text(driver.userName),
-                            subtitle: Text(
-                              'License: ${driver.licenseNumber} • Rating: ${driver.rating}⭐',
-                            ),
-                            secondary: CircleAvatar(
-                              backgroundColor: Colors.green[100],
-                              child: Icon(Icons.person, color: Colors.green[700]),
+                        children: availableDrivers.map((driver) {
+                          return Card(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            child: RadioListTile<String>(
+                              value: driver.userId,
+                              groupValue: _selectedDriverId,
+                              onChanged: (value) {
+                                setState(() {
+                                  _selectedDriverId = value;
+                                });
+                              },
+                              title: Text(driver.userName),
+                              subtitle: Text(
+                                'License: ${driver.licenseNumber} • Rating: ${driver.rating}⭐ • Deliveries: ${driver.totalDeliveries}',
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                              secondary: CircleAvatar(
+                                backgroundColor: Colors.green[100],
+                                child: Icon(Icons.person, color: Colors.green[700]),
+                              ),
                             ),
                           );
                         }).toList(),
@@ -201,9 +209,9 @@ class _AssignLoadScreenState extends State<AssignLoadScreen> {
                         return const Center(child: CircularProgressIndicator());
                       }
 
-                      // Filter vehicles by capacity
+                      // Filter vehicles by capacity and availability
                       final suitableVehicles = vehicleProvider.vehicles
-                          .where((v) => v.capacity >= widget.load.weight)
+                          .where((v) => v.capacity >= widget.load.weight && v.status == 'available')
                           .toList();
 
                       if (suitableVehicles.isEmpty) {
@@ -230,21 +238,25 @@ class _AssignLoadScreenState extends State<AssignLoadScreen> {
 
                       return Column(
                         children: suitableVehicles.map((vehicle) {
-                          return RadioListTile<String>(
-                            value: vehicle.id,
-                            groupValue: _selectedVehicleId,
-                            onChanged: (value) {
-                              setState(() {
-                                _selectedVehicleId = value;
-                              });
-                            },
-                            title: Text('${vehicle.vehicleNumber} - ${vehicle.model}'),
-                            subtitle: Text(
-                              'Capacity: ${vehicle.capacity} kg • Type: ${vehicle.vehicleType}',
-                            ),
-                            secondary: CircleAvatar(
-                              backgroundColor: Colors.blue[100],
-                              child: Icon(Icons.directions_car, color: Colors.blue[700]),
+                          return Card(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            child: RadioListTile<String>(
+                              value: vehicle.id,
+                              groupValue: _selectedVehicleId,
+                              onChanged: (value) {
+                                setState(() {
+                                  _selectedVehicleId = value;
+                                });
+                              },
+                              title: Text('${vehicle.vehicleNumber} - ${vehicle.model}'),
+                              subtitle: Text(
+                                'Capacity: ${vehicle.capacity} kg • Type: ${vehicle.vehicleType} • Fuel: ${vehicle.fuelType}',
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                              secondary: CircleAvatar(
+                                backgroundColor: Colors.blue[100],
+                                child: Icon(Icons.directions_car, color: Colors.blue[700]),
+                              ),
                             ),
                           );
                         }).toList(),

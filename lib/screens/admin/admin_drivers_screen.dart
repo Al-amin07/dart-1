@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/driver_provider.dart';
 import '../../widgets/driver_card.dart';
+import 'create_driver_profile_screen.dart'; // Add this import
 
 class AdminDriversScreen extends StatefulWidget {
   const AdminDriversScreen({super.key});
@@ -29,6 +30,20 @@ class _AdminDriversScreenState extends State<AdminDriversScreen> {
         title: const Text('Drivers'),
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
+        actions: [
+          // Add Create Button
+          IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const CreateDriverProfileScreen(),
+                ),
+              ).then((_) => _loadData());
+            },
+          ),
+        ],
       ),
       body: Consumer<DriverProvider>(
         builder: (context, driverProvider, _) {
@@ -70,6 +85,27 @@ class _AdminDriversScreenState extends State<AdminDriversScreen> {
                     style: TextStyle(
                       fontSize: 18,
                       color: Colors.grey[600],
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const CreateDriverProfileScreen(),
+                        ),
+                      ).then((_) => _loadData());
+                    },
+                    icon: const Icon(Icons.add),
+                    label: const Text('Add Driver'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
                     ),
                   ),
                 ],
