@@ -2,6 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import 'auth/login_screen.dart';
+import 'settings/notification_settings_screen.dart';
+import 'settings/edit_profile_screen.dart';
+import 'settings/change_password_screen.dart';
+import 'settings/language_screen.dart';
+import 'settings/theme_screen.dart';
+import 'settings/help_support_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -86,27 +92,40 @@ class ProfileScreen extends StatelessWidget {
 
             // Account Settings
             _buildSection(
+              context,
               'Account Settings',
               [
                 _buildListTile(
+                  context,
                   Icons.person,
                   'Edit Profile',
                   () {
-                    // Navigate to edit profile
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const EditProfileScreen()),
+                    );
                   },
                 ),
                 _buildListTile(
+                  context,
                   Icons.lock,
                   'Change Password',
                   () {
-                    // Navigate to change password
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const ChangePasswordScreen()),
+                    );
                   },
                 ),
                 _buildListTile(
+                  context,
                   Icons.notifications,
                   'Notifications',
                   () {
-                    // Navigate to notifications settings
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const NotificationSettingsScreen()),
+                    );
                   },
                 ),
               ],
@@ -116,30 +135,44 @@ class ProfileScreen extends StatelessWidget {
 
             // App Settings
             _buildSection(
+              context,
               'App Settings',
               [
                 _buildListTile(
+                  context,
                   Icons.language,
                   'Language',
                   () {
-                    // Navigate to language settings
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const LanguageScreen()),
+                    );
                   },
                 ),
                 _buildListTile(
+                  context,
                   Icons.dark_mode,
                   'Theme',
                   () {
-                    // Navigate to theme settings
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const ThemeScreen()),
+                    );
                   },
                 ),
                 _buildListTile(
+                  context,
                   Icons.help,
                   'Help & Support',
                   () {
-                    // Navigate to help
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const HelpSupportScreen()),
+                    );
                   },
                 ),
                 _buildListTile(
+                  context,
                   Icons.info,
                   'About',
                   () {
@@ -198,7 +231,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSection(String title, List<Widget> children) {
+  Widget _buildSection(BuildContext context, String title, List<Widget> children) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -232,7 +265,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildListTile(IconData icon, String title, VoidCallback onTap) {
+  Widget _buildListTile(BuildContext context, IconData icon, String title, VoidCallback onTap) {
     return ListTile(
       leading: Icon(icon, color: Colors.grey[700]),
       title: Text(title),

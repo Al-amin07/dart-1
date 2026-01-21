@@ -17,10 +17,17 @@ class AssignLoadScreen extends StatefulWidget {
 class _AssignLoadScreenState extends State<AssignLoadScreen> {
   String? _selectedDriverId;
   String? _selectedVehicleId;
+  bool _isReassigning = false;
 
   @override
   void initState() {
     super.initState();
+    _isReassigning = widget.load.status == 'assigned';
+    // Pre-select current driver and vehicle if reassigning
+    if (_isReassigning) {
+      _selectedDriverId = widget.load.driverId;
+      _selectedVehicleId = widget.load.vehicleId;
+    }
     _loadData();
   }
 
@@ -53,8 +60,10 @@ class _AssignLoadScreenState extends State<AssignLoadScreen> {
 
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Load assigned successfully!'),
+        SnackBar(
+          content: Text(_isReassigning 
+              ? 'Load reassigned successfully!' 
+              : 'Load assigned successfully!'),
           backgroundColor: Colors.green,
         ),
       );
@@ -73,7 +82,7 @@ class _AssignLoadScreenState extends State<AssignLoadScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Assign Load'),
+        title: Text(_isReassigning ? 'Reassign Load' : 'Assign Load'),
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
       ),
@@ -88,12 +97,46 @@ class _AssignLoadScreenState extends State<AssignLoadScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    widget.load.loadNumber,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          widget.load.loadNumber,
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      if (_isReassigning)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.orange[100],
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.swap_horiz, 
+                                  size: 16, 
+                                  color: Colors.orange[700]),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Reassigning',
+                                style: TextStyle(
+                                  color: Colors.orange[700],
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -115,6 +158,50 @@ class _AssignLoadScreenState extends State<AssignLoadScreen> {
                       ),
                     ],
                   ),
+                  if (_isReassigning && widget.load.driverName != null) ...[
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.grey[300]!),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Currently Assigned To:',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Icon(Icons.person, size: 16, color: Colors.grey[700]),
+                              const SizedBox(width: 4),
+                              Text(
+                                widget.load.driverName!,
+                                style: const TextStyle(fontWeight: FontWeight.w500),
+                              ),
+                              if (widget.load.vehicleNumber != null) ...[
+                                const SizedBox(width: 12),
+                                Icon(Icons.directions_car, size: 16, color: Colors.grey[700]),
+                                const SizedBox(width: 4),
+                                Text(
+                                  widget.load.vehicleNumber!,
+                                  style: const TextStyle(fontWeight: FontWeight.w500),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -127,9 +214,9 @@ class _AssignLoadScreenState extends State<AssignLoadScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Select Driver',
-                    style: TextStyle(
+                  Text(
+                    _isReassigning ? 'Select New Driver' : 'Select Driver',
+                    style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
@@ -141,9 +228,21 @@ class _AssignLoadScreenState extends State<AssignLoadScreen> {
                         return const Center(child: CircularProgressIndicator());
                       }
 
-                      final availableDrivers = driverProvider.drivers
+                      // Get available drivers
+                      var availableDrivers = driverProvider.drivers
                           .where((d) => d.status == 'available')
                           .toList();
+                      
+                      // If reassigning, also include the currently assigned driver
+                      if (_isReassigning && widget.load.driverId != null) {
+                        final currentDriver = driverProvider.drivers
+                            .where((d) => d.userId == widget.load.driverId)
+                            .firstOrNull;
+                        if (currentDriver != null && 
+                            !availableDrivers.any((d) => d.userId == currentDriver.userId)) {
+                          availableDrivers.insert(0, currentDriver);
+                        }
+                      }
 
                       if (availableDrivers.isEmpty) {
                         return Container(
@@ -158,8 +257,12 @@ class _AssignLoadScreenState extends State<AssignLoadScreen> {
 
                       return Column(
                         children: availableDrivers.map((driver) {
+                          final isCurrentDriver = _isReassigning && 
+                                                  driver.userId == widget.load.driverId;
+                          
                           return Card(
                             margin: const EdgeInsets.only(bottom: 8),
+                            color: isCurrentDriver ? Colors.blue[50] : null,
                             child: RadioListTile<String>(
                               value: driver.userId,
                               groupValue: _selectedDriverId,
@@ -168,7 +271,32 @@ class _AssignLoadScreenState extends State<AssignLoadScreen> {
                                   _selectedDriverId = value;
                                 });
                               },
-                              title: Text(driver.userName),
+                              title: Row(
+                                children: [
+                                  Text(driver.userName),
+                                  if (isCurrentDriver) ...[
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.blue,
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: const Text(
+                                        'Current',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
                               subtitle: Text(
                                 'License: ${driver.licenseNumber} • Rating: ${driver.rating}⭐ • Deliveries: ${driver.totalDeliveries}',
                                 style: const TextStyle(fontSize: 12),
@@ -195,9 +323,9 @@ class _AssignLoadScreenState extends State<AssignLoadScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Select Vehicle',
-                    style: TextStyle(
+                  Text(
+                    _isReassigning ? 'Select New Vehicle' : 'Select Vehicle',
+                    style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
@@ -210,9 +338,20 @@ class _AssignLoadScreenState extends State<AssignLoadScreen> {
                       }
 
                       // Filter vehicles by capacity and availability
-                      final suitableVehicles = vehicleProvider.vehicles
+                      var suitableVehicles = vehicleProvider.vehicles
                           .where((v) => v.capacity >= widget.load.weight && v.status == 'available')
                           .toList();
+                      
+                      // If reassigning, also include the currently assigned vehicle
+                      if (_isReassigning && widget.load.vehicleId != null) {
+                        final currentVehicle = vehicleProvider.vehicles
+                            .where((v) => v.id == widget.load.vehicleId)
+                            .firstOrNull;
+                        if (currentVehicle != null && 
+                            !suitableVehicles.any((v) => v.id == currentVehicle.id)) {
+                          suitableVehicles.insert(0, currentVehicle);
+                        }
+                      }
 
                       if (suitableVehicles.isEmpty) {
                         return Container(
@@ -238,8 +377,12 @@ class _AssignLoadScreenState extends State<AssignLoadScreen> {
 
                       return Column(
                         children: suitableVehicles.map((vehicle) {
+                          final isCurrentVehicle = _isReassigning && 
+                                                    vehicle.id == widget.load.vehicleId;
+                          
                           return Card(
                             margin: const EdgeInsets.only(bottom: 8),
+                            color: isCurrentVehicle ? Colors.blue[50] : null,
                             child: RadioListTile<String>(
                               value: vehicle.id,
                               groupValue: _selectedVehicleId,
@@ -248,7 +391,32 @@ class _AssignLoadScreenState extends State<AssignLoadScreen> {
                                   _selectedVehicleId = value;
                                 });
                               },
-                              title: Text('${vehicle.vehicleNumber} - ${vehicle.model}'),
+                              title: Row(
+                                children: [
+                                  Text('${vehicle.vehicleNumber} - ${vehicle.model}'),
+                                  if (isCurrentVehicle) ...[
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.blue,
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: const Text(
+                                        'Current',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
                               subtitle: Text(
                                 'Capacity: ${vehicle.capacity} kg • Type: ${vehicle.vehicleType} • Fuel: ${vehicle.fuelType}',
                                 style: const TextStyle(fontSize: 12),
@@ -293,9 +461,9 @@ class _AssignLoadScreenState extends State<AssignLoadScreen> {
                               valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                             ),
                           )
-                        : const Text(
-                            'Assign Load',
-                            style: TextStyle(
+                        : Text(
+                            _isReassigning ? 'Reassign Load' : 'Assign Load',
+                            style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
@@ -308,5 +476,15 @@ class _AssignLoadScreenState extends State<AssignLoadScreen> {
         ),
       ),
     );
+  }
+}
+
+extension FirstWhereOrNullExtension<E> on Iterable<E> {
+  E? get firstOrNull {
+    var iterator = this.iterator;
+    if (iterator.moveNext()) {
+      return iterator.current;
+    }
+    return null;
   }
 }

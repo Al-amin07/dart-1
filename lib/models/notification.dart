@@ -24,15 +24,47 @@ class AppNotification {
   });
 
   factory AppNotification.fromJson(Map<String, dynamic> json) {
+    // Handle user field which can be either string or object
+    String userIdValue;
+    if (json['user'] is String) {
+      userIdValue = json['user'];
+    } else if (json['user'] is Map) {
+      userIdValue = json['user']['_id'] ?? '';
+    } else {
+      userIdValue = '';
+    }
+
+    // Handle relatedLoad field
+    String? loadId;
+    String? loadNumber;
+    if (json['relatedLoad'] != null) {
+      if (json['relatedLoad'] is String) {
+        loadId = json['relatedLoad'];
+      } else if (json['relatedLoad'] is Map) {
+        loadId = json['relatedLoad']['_id'];
+        loadNumber = json['relatedLoad']['loadNumber'];
+      }
+    }
+
+    // Handle relatedDriver field
+    String? driverId;
+    if (json['relatedDriver'] != null) {
+      if (json['relatedDriver'] is String) {
+        driverId = json['relatedDriver'];
+      } else if (json['relatedDriver'] is Map) {
+        driverId = json['relatedDriver']['_id'];
+      }
+    }
+
     return AppNotification(
       id: json['_id'] ?? '',
-      userId: json['user']?['_id'] ?? json['user'] ?? '',
+      userId: userIdValue,
       title: json['title'] ?? '',
       message: json['message'] ?? '',
       type: json['type'] ?? 'general',
-      relatedLoadId: json['relatedLoad']?['_id'],
-      relatedLoadNumber: json['relatedLoad']?['loadNumber'],
-      relatedDriverId: json['relatedDriver']?['_id'],
+      relatedLoadId: loadId,
+      relatedLoadNumber: loadNumber,
+      relatedDriverId: driverId,
       isRead: json['isRead'] ?? false,
       createdAt: DateTime.parse(json['createdAt'] ?? DateTime.now().toIso8601String()),
     );

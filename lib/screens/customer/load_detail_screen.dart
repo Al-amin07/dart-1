@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/load.dart';
 import '../../providers/load_provider.dart';
+import '../../providers/auth_provider.dart';
+import '../admin/assign_load_screen.dart';
 
 class LoadDetailScreen extends StatelessWidget {
   final Load load;
@@ -36,13 +38,16 @@ class LoadDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+    final isAdmin = authProvider.role == 'admin';
+
     return Scaffold(
       appBar: AppBar(
         title: Text(load.loadNumber),
         backgroundColor: Colors.purple,
         foregroundColor: Colors.white,
         actions: [
-          if (load.status == 'pending')
+          if (load.status == 'pending' && authProvider.role == 'customer')
             IconButton(
               icon: const Icon(Icons.delete),
               onPressed: () => _showDeleteDialog(context),
@@ -96,6 +101,97 @@ class LoadDetailScreen extends StatelessWidget {
                 ],
               ),
             ),
+
+            // Admin Actions (Assign/Reassign Driver)
+            if (isAdmin && (load.status == 'pending' || load.status == 'assigned'))
+              Container(
+                margin: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Colors.blue[700]!, Colors.blue[500]!],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.blue.withOpacity(0.3),
+                      blurRadius: 8,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          load.status == 'pending' 
+                              ? Icons.assignment 
+                              : Icons.swap_horiz,
+                          color: Colors.white,
+                          size: 28,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            load.status == 'pending'
+                                ? 'This load needs to be assigned'
+                                : 'You can reassign this load',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => AssignLoadScreen(load: load),
+                          ),
+                        ).then((_) {
+                          // Refresh the load data when returning
+                          Navigator.pop(context);
+                        });
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: Colors.blue[700],
+                        minimumSize: const Size(double.infinity, 48),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            load.status == 'pending' 
+                                ? Icons.person_add 
+                                : Icons.swap_horiz,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            load.status == 'pending'
+                                ? 'Assign Driver & Vehicle'
+                                : 'Reassign Driver & Vehicle',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
 
             // Load Details
             Padding(
@@ -179,12 +275,35 @@ class LoadDetailScreen extends StatelessWidget {
                   
                   if (load.driverName != null) ...[
                     const SizedBox(height: 24),
-                    const Text(
-                      'Assigned Driver',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Assigned Driver',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        if (isAdmin && load.status == 'assigned')
+                          TextButton.icon(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => AssignLoadScreen(load: load),
+                                ),
+                              ).then((_) {
+                                Navigator.pop(context);
+                              });
+                            },
+                            icon: const Icon(Icons.swap_horiz, size: 18),
+                            label: const Text('Change'),
+                            style: TextButton.styleFrom(
+                              foregroundColor: Colors.blue,
+                            ),
+                          ),
+                      ],
                     ),
                     const SizedBox(height: 16),
                     Container(
@@ -197,8 +316,9 @@ class LoadDetailScreen extends StatelessWidget {
                       child: Row(
                         children: [
                           CircleAvatar(
+                            radius: 30,
                             backgroundColor: Colors.green[100],
-                            child: Icon(Icons.person, color: Colors.green[700]),
+                            child: Icon(Icons.person, size: 32, color: Colors.green[700]),
                           ),
                           const SizedBox(width: 16),
                           Expanded(
@@ -209,17 +329,84 @@ class LoadDetailScreen extends StatelessWidget {
                                   load.driverName!,
                                   style: const TextStyle(
                                     fontWeight: FontWeight.bold,
-                                    fontSize: 16,
+                                    fontSize: 18,
                                   ),
                                 ),
+                                const SizedBox(height: 4),
                                 if (load.vehicleNumber != null)
-                                  Text(
-                                    'Vehicle: ${load.vehicleNumber}',
-                                    style: TextStyle(
-                                      color: Colors.grey[600],
-                                      fontSize: 14,
-                                    ),
+                                  Row(
+                                    children: [
+                                      Icon(Icons.directions_car, size: 16, color: Colors.grey[600]),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'Vehicle: ${load.vehicleNumber}',
+                                        style: TextStyle(
+                                          color: Colors.grey[600],
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                    ],
                                   ),
+                              ],
+                            ),
+                          ),
+                          if (!isAdmin)
+                            IconButton(
+                              icon: const Icon(Icons.phone, color: Colors.green),
+                              onPressed: () {
+                                // Call driver functionality
+                              },
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+
+                  // Customer Info (for admin view)
+                  if (isAdmin) ...[
+                    const SizedBox(height: 24),
+                    const Text(
+                      'Customer Information',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.purple[50],
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.purple[200]!),
+                      ),
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 30,
+                            backgroundColor: Colors.purple[100],
+                            child: Icon(Icons.person, size: 32, color: Colors.purple[700]),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  load.customerName ?? 'Customer',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Customer ID: ${load.customerId}',
+                                  style: TextStyle(
+                                    color: Colors.grey[600],
+                                    fontSize: 12,
+                                  ),
+                                ),
                               ],
                             ),
                           ),
